@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+
+CameraPosition_/Debug/*
+CameraPosition_/x64/*
+x64/*
