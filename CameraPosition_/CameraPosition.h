@@ -26,7 +26,8 @@ public:
 
 	Position getCameraPosition();
 	Orientation getCameraOrientation();
-	void findRectangle(cv::Mat& image, std::vector<std::vector<cv::Point> >& squares);
+	void findRectangle(cv::Mat& image, cv::Mat &gray, std::vector<std::vector<cv::Point2f> >& squares);
+	void findSquares(const cv::Mat& image, std::vector<std::vector<cv::Point> >& squares);
 
 private:
 
