@@ -14,8 +14,6 @@
 
 
 using namespace cv;
-// Defining the dimensions of checkerboard
-int CHECKERBOARD[2]{ 1,4 };
 
 const char* wndname = "Square Detection Demo";
 
@@ -32,6 +30,7 @@ static void help(const char* programName)
 Mat getImage(const char* fileName)
 {
 	Mat image;
+
 	try
 	{
 		samples::addSamplesDataSearchPath("C:\\Users\\Julia\\source\\repos\\CameraPosition_\\CameraPosition-\\CameraPosition_\\image\\");
@@ -46,6 +45,8 @@ Mat getImage(const char* fileName)
 	return image;
 }
 
+// Defining the world coordinates for 3D points
+// Creating vector to store vectors of 3D points for each checkerboard image
 std::vector<cv::Point3f> Generate3DPoints()
 {
 	std::vector<cv::Point3f> points;
@@ -65,20 +66,6 @@ std::vector<cv::Point3f> Generate3DPoints()
 	x = -.5; y = .5; z = -.5;
 	points.push_back(cv::Point3f(x, y, z));
 
-	//x = .5; y = -.5; z = -.5;
-	//points.push_back(cv::Point3f(x, y, z));
-
-	//x = -.5; y = -.5; z = -.5;
-	//points.push_back(cv::Point3f(x, y, z));
-
-	//x = -.5; y = -.5; z = .5;
-	//points.push_back(cv::Point3f(x, y, z));
-
-	for (unsigned int i = 0; i < points.size(); ++i)
-	{
-		std::cout << points[i] << std::endl;
-	}
-
 	return points;
 }
 
@@ -88,36 +75,29 @@ int main(int argc, char** argv)
 	//help(argv[0]);
 
 	static const char* defaultFileNames[] =
-	{ "1.jpg", "2.jpg", "3.jpg", "4.jpg", "5.jpg" };
+	{ "1.jpg", "2.jpg", "3.jpg", "4.jpg" };
 
 	//добавить возможность задать свои файлы
 
 	auto position = CameraPosition();
+	auto objpoints = Generate3DPoints();
 
 	for (const auto& fileName : defaultFileNames)
 	{
-
 		auto image = getImage(fileName);
 
-		Mat gray;
+		if (image.empty()) continue;
 
-		if (!image.empty())
+
+		auto square = position.findRectangle(image);
+
+		if (square.size())
 		{
-			// Defining the world coordinates for 3D points
-			// Creating vector to store vectors of 3D points for each checkerboard image
-			//std::vector<std::vector<cv::Point3f> > objpoints;
-
-
-			std::vector<std::vector<Point2f>> squares;
-
-
-
-			position.findRectangle(image, gray, squares);
-
 			for (int r = 0; r < 4; r++) {
-				line(image, squares[0][r], squares[0][(r + 1) % 4], Scalar(0, 255, 0), 3, 8);
+				line(image, square[r], square[(r + 1) % 4], Scalar(0, 255, 0), 3, 8);
 			}
-		
+
+			imshow(wndname, image);
 			cv::Mat cameraMatrix(3, 3, cv::DataType<double>::type);
 			cv::setIdentity(cameraMatrix);
 
@@ -129,11 +109,16 @@ int main(int argc, char** argv)
 			distCoeffs.at<double>(2) = 0;
 			distCoeffs.at<double>(3) = 0;
 
-			solvePnP(Generate3DPoints(), squares[0], cameraMatrix, distCoeffs, rvec, tvec, false);
+			solvePnP(objpoints, square, cameraMatrix, distCoeffs, rvec, tvec, false);
 
-			//calibrateCamera(Generate3DPoints(), squares[0], cv::Size(gray.rows, gray.cols),cameraMatrix, distCoeffs, rvec, tvec, flag);
+			//	calibrateCamera(Generate3DPoints(), squares[0], image.size(),cameraMatrix, distCoeffs, rvec, tvec);
 
-			std::cout << "distCoeffs : " << distCoeffs << std::endl;
+			double Rtmp[9] = { 0.0 };
+
+			Mat R(3, 3, DataType<double>::type, Rtmp);
+
+			Rodrigues(rvec, R); //пересчет углов поворота в матрицу поворота
+
 			std::cout << "Rotation vector : " << rvec << std::endl;
 			std::cout << "Translation vector : " << tvec << std::endl;
 
@@ -141,6 +126,7 @@ int main(int argc, char** argv)
 			int c = waitKey();
 			if (c == 27)break;
 		}
+
 
 	}
 }
