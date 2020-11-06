@@ -25,7 +25,7 @@ static void help()
 
 	if (answer == "Y") 
 	{
-		char* _fileName = new char();
+		char _fileName[256];
 		std::cout << "\nYour file:\n";
 		std::cin >> _fileName;
 
