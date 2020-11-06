@@ -1,7 +1,63 @@
 #include "CameraPosition.h"
-#include <opencv2/imgproc/imgproc_c.h>
-#include <math.h>
+
 using namespace cv;
+
+CameraPosition::CameraPosition(const char * fileName)
+{
+	calculate(fileName);
+}
+
+cv::Mat CameraPosition::getRotationVector()
+{
+	return rvec;
+}
+
+cv::Mat CameraPosition::getTranslationVector()
+{
+	return tvec;
+}
+
+cv::Mat CameraPosition::getCameraPosition()
+{
+	return cameraPosition;
+}
+
+cv::Vec3d CameraPosition::getCameraPositionByEulerAngle()
+{
+	return cameraEulerAngle;
+}
+
+void CameraPosition::calculate(const char * fileName)
+{
+	cv::Mat cameraMatrix(3, 3, cv::DataType<double>::type, { 0.0 });
+	cv::Mat distCoeffs(4, 1, cv::DataType<double>::type, { 0.0 });
+	Mat rotCamerMatrix(3, 3, DataType<double>::type, { 0.0 });
+	cv::setIdentity(cameraMatrix);
+
+	auto image = getImage(fileName);
+	auto rectangle = findRectangle(image);
+	drawRectangle(image, rectangle);
+
+	
+	solvePnP(Generate3DPoints(), rectangle, cameraMatrix, distCoeffs, rvec, tvec, false);// calculate pose
+	Rodrigues(rvec, rotCamerMatrix); //recalculation into rotation matrix
+
+	cameraPosition = calcaulteCameraPosition(rotCamerMatrix, tvec);
+	cameraEulerAngle = calculateEulerAngles(rotCamerMatrix, tvec);
+}
+
+void CameraPosition::drawRectangle(cv::Mat &image, std::vector<cv::Point2f> &square)
+{
+	for (int r = 0; r < 4; r++)
+	{
+		line(image, square[r], square[(r + 1) % 4], Scalar(0, 255, 0), 3, 8);
+	}
+
+	imshow(wndname, image);
+
+	int c = waitKey();
+	if (c == 27) return;
+}
 
 std::vector<Point2f> CameraPosition::findRectangle(Mat& image)
 {
@@ -69,6 +125,9 @@ std::vector<Point2f> CameraPosition::findRectangle(Mat& image)
 		}
 	}
 
+	if (!rectangles.size())
+		throw std::exception("Couldn't find a paper.");
+
 	return getBigRectangles(rectangles);
 }
 
@@ -85,12 +144,34 @@ double CameraPosition::angle(Point2f pt1, Point2f pt2, Point2f pt0)
 		/ sqrt((dx1 * dx1 + dy1 * dy1) * (dx2 * dx2 + dy2 * dy2) + 1e-10);
 }
 
+Mat CameraPosition::calcaulteCameraPosition(const Mat &rotCamerMatrix, const Mat& translationVector)
+{
+	return -rotCamerMatrix.t() * translationVector;
+}
+
+Vec3d CameraPosition::calculateEulerAngles(const Mat & rotCamerMatrix, const Mat& translationVector)
+{
+	Vec3d eulerAngles;
+	cv::Mat pose_mat = cv::Mat(3, 4, CV_64FC1); 
+	cv::Mat out_intrinsics = cv::Mat(3, 3, CV_64FC1);
+	cv::Mat out_rotation = cv::Mat(3, 3, CV_64FC1);
+	cv::Mat out_translation = cv::Mat(3, 1, CV_64FC1);
+
+	hconcat(rotCamerMatrix, translationVector, pose_mat);
+	decomposeProjectionMatrix(pose_mat,
+		out_intrinsics, out_rotation, out_translation,
+		noArray(), noArray(), noArray(),
+		eulerAngles);
+
+
+	return eulerAngles;
+}
+
 std::vector<Point2f> CameraPosition::getBigRectangles(const std::vector<std::vector<Point2f>>& rectangles)
 {
 
-	if (!rectangles.size()) return std::vector<Point2f>();
-
-	int maxWidth = 0, maxHeight = 0, rectId = 0;
+	int maxWidth = 0, maxHeight = 0;
+	size_t rectId = 0;
 
 	for (size_t i = 0; i < rectangles.size(); i++)
 	{
@@ -107,4 +188,28 @@ std::vector<Point2f> CameraPosition::getBigRectangles(const std::vector<std::vec
 	}
 
 	return rectangles[rectId];
+}
+
+Mat CameraPosition::getImage(const char* fileName)
+{
+	samples::addSamplesDataSearchPath("C:\\Users\\Julia\\source\\repos\\CameraPosition_\\CameraPosition-\\CameraPosition_\\image\\");
+	auto name = samples::findFile(fileName);
+	Mat image = imread(name, IMREAD_COLOR);
+
+	if (image.empty())
+		throw std::exception("Couldn't load file.");
+
+	return image;
+}
+
+std::vector<cv::Point3f> CameraPosition::Generate3DPoints()
+{
+	std::vector<cv::Point3f> points;
+
+	points.push_back(cv::Point3f(.5, .5, -.5));
+	points.push_back(cv::Point3f(.5, .5, .5));
+	points.push_back(cv::Point3f(-.5, .5, .5));
+	points.push_back(cv::Point3f(-.5, .5, -.5));
+
+	return points;
 }
