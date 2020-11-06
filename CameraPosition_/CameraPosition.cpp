@@ -192,7 +192,6 @@ std::vector<Point2f> CameraPosition::getBigRectangles(const std::vector<std::vec
 
 Mat CameraPosition::getImage(const char* fileName)
 {
-	samples::addSamplesDataSearchPath("C:\\Users\\Julia\\source\\repos\\CameraPosition_\\CameraPosition-\\CameraPosition_\\image\\");
 	auto name = samples::findFile(fileName);
 	Mat image = imread(name, IMREAD_COLOR);
 

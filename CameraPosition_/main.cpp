@@ -2,33 +2,50 @@
 //
 
 #include <iostream>
+
 #include "CameraPosition.h"
 
 using namespace cv;
 
-static void help(const char* programName)
+//static char* fileNames[];
+std::vector<const char*> fileNames;
+std::vector<const char*> defaultFileNames = { ".\\image\\1.jpg", ".\\image\\2.jpg", ".\\image\\3.jpg", ".\\image\\4.jpg" };
+
+static void help()
 {
+	std::string answer;
+
 	std::cout <<
 		"\nA program using pyramid scaling, Canny, contours and contour simplification\n"
-		"to find squares in a list of default images \n"
-		"Returns sequence of squares detected on the image.\n"
-		"Call:\n"
-		"./" << programName << " [file_name (optional)]\n";
-}
+		"to find squares in a list of default images (or given image). \n"
+		"Returns data of the camera position and a rectangle detected on the image.\n"
+		"\nWant to set your file (Y/N):\n";
 
+	std::cin >> answer;
+
+	if (answer == "Y") 
+	{
+		char* _fileName = new char();
+		std::cout << "\nYour file:\n";
+		std::cin >> _fileName;
+
+		fileNames = { _fileName };
+	}
+	else if (answer == "N")
+	{ 
+		fileNames = defaultFileNames;
+	}
+	else std::cout << "Wrong answer! The program will use the default images.";
+
+}
 
 int main(int argc, char** argv)
 {
-	//help(argv[0]);
+	help();
 
-	static const char* defaultFileNames[] =
-	{ "1.jpg", "2.jpg", "3.jpg", "4.jpg" };
-
-	//добавить возможность задать свои файлы
-
-	for (const auto& fileName : defaultFileNames)
+	for (const auto& fileName : fileNames)
 	{
-		std::cout << "File:" << fileName << std::endl;
+		std::cout << std::endl << "File:" << fileName << std::endl;
 
 		try {
 			CameraPosition camera(fileName);
@@ -41,7 +58,7 @@ int main(int argc, char** argv)
 		}
 		catch (std::exception& e)
 		{
-			std::cout << "Error: " << e.what();
+			std::cout << "\n\nError: " << e.what();
 		}
 	}
 }

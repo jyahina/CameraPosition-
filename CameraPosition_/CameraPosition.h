@@ -65,7 +65,6 @@ private:
 	*/
 	double angle(cv::Point2f pt1, cv::Point2f pt2, cv::Point2f pt0);
 
-
 	/*
 	* calculates camera position
 	*/
