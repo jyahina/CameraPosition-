@@ -64,4 +64,8 @@ int main(int argc, char** argv)
 			std::cout << "\n\nError: " << e.what();
 		}
 	}
+
+	system("pause");
+
+	return 0;
 }
