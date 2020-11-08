@@ -7,7 +7,6 @@
 
 using namespace cv;
 
-//static char* fileNames[];
 std::vector<const char*> fileNames;
 std::vector<const char*> defaultFileNames = { ".\\image\\1.jpg", ".\\image\\2.jpg", ".\\image\\3.jpg", ".\\image\\4.jpg" };
 
@@ -35,7 +34,11 @@ static void help()
 	{ 
 		fileNames = defaultFileNames;
 	}
-	else std::cout << "Wrong answer! The program will use the default images.";
+	else
+	{
+		std::cout << "Wrong answer! The program will use the default images.";
+		fileNames = defaultFileNames;
+	}
 
 }
 

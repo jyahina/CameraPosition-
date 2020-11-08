@@ -104,9 +104,6 @@ std::vector<Point2f> CameraPosition::findRectangle(Mat& image)
 				// Note: absolute value of an area is used because
 				// area may be positive or negative - in accordance with the
 				// contour orientation
-				// Note: absolute value of an area is used because
-				// area may be positive or negative - in accordance with the
-				// contour orientation
 				if (approx.size() == 4 &&
 					fabs(contourArea(Mat(approx))) > 1000 &&
 					isContourConvex(Mat(approx)))
