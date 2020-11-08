@@ -54,9 +54,8 @@ void CameraPosition::drawRectangle(cv::Mat &image, std::vector<cv::Point2f> &squ
 	}
 
 	imshow(wndname, image);
-
-	int c = waitKey();
-	if (c == 27) return;
+	waitKey(0);
+	destroyAllWindows();
 }
 
 std::vector<Point2f> CameraPosition::findRectangle(Mat& image)
